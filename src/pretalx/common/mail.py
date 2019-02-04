@@ -4,8 +4,10 @@ from smtplib import SMTPSenderRefused
 from typing import Any, Dict, Union
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
+from django.core.validators import EmailValidator
 from django.utils.translation import override
 from i18nfield.strings import LazyI18nString
 from inlinestyler.utils import inline_css
@@ -15,6 +17,23 @@ from pretalx.event.models import Event
 from pretalx.person.models import User
 
 logger = logging.getLogger(__name__)
+
+
+class EmailListValidator():
+    """
+    Validate a comma separated list of email addresses. Usage is equal to
+    django.core.validators.EmailValidator but it accepts a string with comma-separated email
+    addresses (spaces around the commas are allowed as well).
+    """
+    def __init__(self, message=None, code=None, whitelist=None):
+        self.validator = EmailValidator(message, code, whitelist)
+
+    def __call__(self, value):
+        if not value:
+            raise ValidationError(self.validator.message, code=self.validator.code)
+        addresses = value.split(',')
+        for a in addresses:
+            self.validator(a.strip())
 
 
 class CustomSMTPBackend(EmailBackend):

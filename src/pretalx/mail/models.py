@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django.utils.translation import override, ugettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
 
-from pretalx.common.mail import SendMailException
+from pretalx.common.mail import SendMailException, EmailListValidator
 from pretalx.common.mixins import LogMixin
 from pretalx.common.urls import EventUrls
 
@@ -26,17 +26,19 @@ class MailTemplate(LogMixin, models.Model):
     text = I18nTextField(
         verbose_name=_('Text'),
     )
-    reply_to = models.EmailField(
-        max_length=200,
+    reply_to = models.CharField(
+        max_length=400,
         blank=True, null=True,
         verbose_name=_('Reply-To'),
-        help_text=_('Change the Reply-To address if you do not want to use the default orga address'),
+        help_text=_('Change the Reply-To address if you do not want to use the default orga address. You can enter comma separated addresses.'),
+        validators=[EmailListValidator],
     )
     bcc = models.CharField(
         max_length=1000,
         blank=True, null=True,
         verbose_name=_('BCC'),
         help_text=_('Enter comma separated addresses. Will receive a blind copy of every mail sent from this template. This may be a LOT!'),
+        validators=[EmailListValidator],
     )
 
     class urls(EventUrls):
